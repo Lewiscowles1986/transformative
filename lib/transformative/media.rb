@@ -2,6 +2,12 @@ module Transformative
   module Media
     module_function
 
+    BUCKET_TO_REGION = {
+      'cloud-cube'    => 'us-east-1',
+      'cloud-cube-eu' => 'eu-west-1',
+      'cloud-cube-jp' => 'ap-northeast-1'
+    }.freeze
+  
     def save(file)
       filename = "#{Time.now.strftime('%Y/%m/%d')}-#{SecureRandom.hex.to_s}"
       ext = file[:filename].match(/\./) ? '.' +
@@ -13,7 +19,13 @@ module Transformative
         # upload to github (canonical store)
         Store.upload(filepath, content)
         # upload to s3 (serves file)
-        s3_upload(filepath, content, ext, file[:type])
+        s3_upload(
+          # the below is for CloudCube compatibility optionally prefixing upload path
+          [s3_prefix, filepath].map(&:to_s).reject(&:empty?).join('/'),
+          content,
+          ext,
+          file[:type]
+        )
       else
         rootpath = "#{File.dirname(__FILE__)}/../../../content/"
         FileSystem.new.upload(rootpath + filepath, content)
@@ -47,13 +59,31 @@ module Transformative
 
     def s3
       @s3 ||= S3::Service.new(
-        access_key_id: ENV['AWS_ACCESS_KEY_ID'],
-        secret_access_key: ENV['AWS_SECRET_ACCESS_KEY']
+        access_key_id: ENV.fetch('CLOUDCUBE_ACCESS_KEY_ID', ENV['AWS_ACCESS_KEY_ID']),
+        secret_access_key: ENV.fetch('CLOUDCUBE_SECRET_ACCESS_KEY', ENV['AWS_SECRET_ACCESS_KEY']),
+        region: region(bucket)
       )
     end
 
+    def s3_prefix
+      @prefix = cloudcube_url_parts.last
+    end
+
     def bucket
-      @bucket ||= s3.bucket(ENV['AWS_BUCKET'])
+      @bucket ||= s3.bucket(cloudcube_url_parts.fetch(1, ENV['AWS_BUCKET']))
+    end
+
+    def cloudcube_url
+      @cloudcube_url ||= ENV['CLOUDCUBE_URL']
+    end
+
+    def cloudcube_url_parts
+      @cloudcube_url_parts ||= cloudcube_url.presence? ? cloudcube_url.split(%r{http?s://|/|\.}) : []
+    end
+
+    def region(bucket)
+      BUCKET_TO_REGION[bucket] ||
+        raise(NotImplementedError, "Unknown bucket #{bucket}")
     end
 
   end
