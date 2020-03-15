@@ -1,5 +1,7 @@
 # Transformative
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
 Transformative is a microblogging engine that powers my personal website [barryfrost.com][bf]. It's written in Ruby and supports several key [IndieWeb][] technologies as detailed below.
 
 All my notes, articles, bookmarks, photos and more are hosted on my personal domain rather than in someone else's silo. I can choose how it looks and works while having fun building it for myself.
@@ -96,7 +98,8 @@ Optional variables:
 
 - `CAMO_KEY` -- your [Camo][] instance private key
 - `CAMO_URL` -- your [Camo][] instance root URL
-- `PUSHOVER_USER`, `PUSHOVER_TOKEN` -- account details for use with Pushover
+- `PUSHOVER_USER` -- account username for use with Pushover
+- `PUSHOVER_TOKEN` -- account access token for use with Pushover
 - `PINBOARD_AUTH_TOKEN` -- Pinboard API key
 - `PUBSUBHUBBUB_HUB` e.g. https://barryfrost.superfeedr.com
 
